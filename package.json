@@ -1,0 +1,10 @@
+{
+  "name": "hisaab",
+  "version": "1.0.0",
+  "description": "settle group expenses fairly",
+  "type": "module",
+  "scripts": {
+    "test": "node engine.test.js",
+    "start": "node engine.js"
+  }
+}
