@@ -51,6 +51,55 @@ function getBalances(group) {
    });
 }
 
+/* 
+   Settlements = the minimum list of payments that brings every balance to 0.
+   Greedy matching: biggest outstanding amounts settle first,
+   whoever reaches 0 leaves the line, next one steps up.
+
+   from/to are member IDS, not names — ids are identity, names are display
+   (two members can share a name, ids cannot collide).
+
+   @param {object} group
+   @returns {Array<{from, to, amount}>} transactions
+      from: debtor's member id
+      to: creditor's member id
+      amount: min(|debtor's balance|, |creditor's balance|), rounded to paise
+*/
+function getSettlements(group) {
+   const balances = getBalances(group);
+   const debtors = balances.filter((member) => member.balance < 0);
+   const creditors = balances.filter((member) => member.balance > 0);
+
+   const settlements = [];
+   let d = 0;
+   let c = 0;
+
+   while (d < debtors.length && c < creditors.length) {
+      const debtor = debtors[d];
+      const creditor = creditors[c];
+
+      const amount = round2(Math.min(Math.abs(debtor.balance), Math.abs(creditor.balance)));
+
+      settlements.push({ from: debtor.id, to: creditor.id, amount });
+
+      debtor.balance += amount;
+      creditor.balance -= amount;
+
+      // settled = within 1 paisa of zero (Math.abs is the point: a debt of -400
+      // must NOT read as settled just because -400 <= 0.01)
+      if (Math.abs(debtor.balance) <= 0.01) { debtor.balance = 0; d++; }
+      if (Math.abs(creditor.balance) <= 0.01) { creditor.balance = 0; c++; }
+   }
+
+   return settlements;
+}
+
+/*
+   KNOWN LIMITATION (v1): anything within 1 paisa of zero counts as settled,
+   so tiny rounding remainders are absorbed instead of paid back.
+   Paying back the last paisa exactly = v2.
+*/
+
 /* -------- TESTS (temporary — moves to engine.test.js when we add a test runner) ── */
 
 const goaTrip = {
@@ -68,8 +117,31 @@ const goaTrip = {
    ],
 };
 
-// test case: A -600 | B +800 | C +400 | D -600 | sum must be 0
+// test case 1: A -600 | B +800 | C +400 | D -600 | sum must be 0
 console.log("total:", getTotal(goaTrip)); // expect 2400
 console.log("balances:", getBalances(goaTrip));
 console.log("balance sum:", getBalances(goaTrip).reduce((sum, m) => sum + m.balance, 0)); // expect 0
 console.log("empty group:", getBalances({})); // expect []
+const settlements1 = getSettlements(goaTrip);
+console.log("settlements 1:", settlements1); // expect 3: A->B 600, D->B 200, D->C 400
+
+// test case 2: the real trip — total 4430, share 1476.67 each (uneven money!)
+const oldTrip = {
+   id: "G02",
+   name: "Old Trip",
+   members: [
+      { id: "M1", name: "Alex" },
+      { id: "M2", name: "David" },
+      { id: "M3", name: "Bob" },
+   ],
+   expenses: [
+      { id: "E1", amount: 300,  paidBy: "M1", description: "dinner" },
+      { id: "E2", amount: 30,   paidBy: "M2", description: "water" },
+      { id: "E3", amount: 500,  paidBy: "M1", description: "fuel" },
+      { id: "E4", amount: 600,  paidBy: "M2", description: "clothes" },
+      { id: "E5", amount: 3000, paidBy: "M3", description: "club" },
+   ],
+};
+const settlements2 = getSettlements(oldTrip);
+console.log("settlements 2:", settlements2); // expect 2: Alex->Bob 676.67, David->Bob 846.66
+console.log("money check:", round2(settlements2.reduce((sum, t) => sum + t.amount, 0))); // expect 1523.33 (= what Bob is owed)
