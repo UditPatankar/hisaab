@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+   <meta charset="UTF-8" />
+   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+   <title>hisaab 💸 — group expense splitter</title>
+   <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+   <header>
+      <h1>hisaab 💸</h1>
+      <p class="tagline">settle group expenses fairly</p>
+   </header>
+
+   <main>
+      <!-- visible only when NO group exists yet -->
+      <section id="create-group-section" class="card">
+         <h2>New group</h2>
+         <form id="create-group-form">
+            <label>Group name
+               <input id="group-name-input" type="text" placeholder="Goa Trip" />
+            </label>
+            <label>Members <small>(comma separated)</small>
+               <input id="members-input" type="text" placeholder="Alex, David, Bob" />
+            </label>
+            <button type="submit">Create group</button>
+         </form>
+      </section>
+
+      <!-- the dashboard — hidden until a group exists -->
+      <section id="group-section" hidden>
+         <h2 id="group-title"></h2>
+
+         <section class="card">
+            <h3>Members</h3>
+            <ul id="members-list" class="chips"></ul>
+            <form id="expense-form" class="expense-form">
+               <select id="expense-paid-by" required></select>
+               <input id="expense-amount" type="number" step="0.01" min="0" placeholder="Amount ₹" required />
+               <input id="expense-description" type="text" placeholder="What for? (dinner, cab...)" required />
+               <button type="submit">Add expense</button>
+            </form>
+         </section>
+
+         <section class="card">
+            <h3>Expenses</h3>
+            <ul id="expenses-list"></ul>
+         </section>
+
+         <section class="card">
+            <h3>Balances</h3>
+            <ul id="balances-list"></ul>
+         </section>
+
+         <section class="card">
+            <h3>Settle up — minimum payments</h3>
+            <ul id="settlements-list"></ul>
+         </section>
+      </section>
+   </main>
+
+   <script type="module" src="app.js"></script>
+</body>
+</html>
