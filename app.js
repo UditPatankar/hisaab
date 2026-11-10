@@ -8,6 +8,7 @@ const membersInputEl = document.getElementById("members-input");
 
 const groupSection = document.getElementById("group-section");
 const membersListEl = document.getElementById("members-list");
+const expenseForm = document.getElementById("expense-form");
 const expensePaidByEl = document.getElementById("expense-paid-by");
 const expenseAmountEl = document.getElementById("expense-amount");
 const expenseDescriptionEl = document.getElementById("expense-description");
@@ -32,6 +33,7 @@ function renderAll() {
       renderExpenses();
       renderBalances();
       renderSettlements();
+      renderPaidByOptions();
    }
 }
 renderAll();
@@ -51,7 +53,7 @@ function renderMembers() {
 function renderExpenses() {
    const expenses = group?.expenses ?? [];
    if (expenses.length === 0) {
-      expensesListEl.innerHTML = `<li class="empty">no expenses yet</li>`
+      expensesListEl.innerHTML = `<li class="empty">no expenses yet</li>`;
       return;
    }
    const members = group?.members ?? [];
@@ -76,7 +78,7 @@ function renderBalances() {
          : balance.balance > 0 
             ?  "balance-positive" 
             : "";
-      return `<li class="${className}">${balance.name}: ₹${balance.balance}</li>`;
+      return `<li class="${className}">${balance.name}: ₹${round2(balance.balance)}</li>`;
    }).join("");
 }
 
@@ -93,8 +95,15 @@ function renderSettlements() {
    settlementsListEl.innerHTML = settlements.map(settlement => {
       const payer = members.find(member => member.id === settlement.from).name;
       const payee = members.find(member => member.id === settlement.to).name;
-      return `<li>${payer} pays ${payee} ₹${settlement.amount}</li>`
+      return `<li>${payer} pays ${payee} ₹${settlement.amount}</li>`;
    }).join("");
+}
+
+function renderPaidByOptions() {
+   const members = group?.members ?? [];
+   const placeholderHtml = `<option value="" disabled selected>Select a member</option>`;
+   const optionsHTML = members.map(member => `<option value="${member.id}">${member.name}</option>`).join("");
+   expensePaidByEl.innerHTML = placeholderHtml + optionsHTML;
 }
 
 // -------- UTILITY FUNCTIONS
@@ -116,6 +125,15 @@ function createGroup(groupName, memberNames) {
    };
 }
 
+function createExpense(paidBy, amount, description) {
+   return {
+      id: generateId("exp"),
+      paidBy,
+      amount,
+      description,
+   }
+}
+
 // ------- EVENT HANDLERS
 function handleGroupCreation(e) {
    e.preventDefault();  
@@ -134,5 +152,23 @@ function handleGroupCreation(e) {
    renderAll();
 }
 
+function handleAddExpense(e) {
+   e.preventDefault(); 
+
+   const paidBy = expensePaidByEl.value;
+   const amount = Number(expenseAmountEl.value);
+   const description = expenseDescriptionEl.value.trim();
+
+   if (group === null || !paidBy || description === "" || !Number.isFinite(amount) || amount <= 0) return;
+
+   group.expenses.push(createExpense(paidBy, amount, description));
+
+   expenseAmountEl.value = "";      
+   expenseDescriptionEl.value = ""
+
+   renderAll();
+} 
+
 // ------- EVENT LISTENERS
 createGroupForm.addEventListener("submit", handleGroupCreation);
+expenseForm.addEventListener("submit", handleAddExpense);
