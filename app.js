@@ -129,8 +129,8 @@ function handleGroupCreation(e) {
    if (groupName === "" || memberNames.length === 0) return;
 
    group = createGroup(groupName, memberNames);
-   groupNameEl.value = 0;
-   membersInputEl.value = 0;
+   groupNameEl.value = "";
+   membersInputEl.value = "";
    renderAll();
 }
 
