@@ -96,3 +96,43 @@ function renderSettlements() {
       return `<li>${payer} pays ${payee} ₹${settlement.amount}</li>`
    }).join("");
 }
+
+// -------- UTILITY FUNCTIONS
+const generateId = (prefix) => `${prefix}_${crypto.randomUUID()}`;
+
+function createMember(name) {
+   return {
+      id: generateId('mbr'),
+      name,
+   };
+}
+
+function createGroup(groupName, memberNames) {
+   return {
+      id: generateId('grp'),
+      name: groupName,
+      members: memberNames.map((name) => createMember(name)),
+      expenses: [],
+   };
+}
+
+// ------- EVENT HANDLERS
+function handleGroupCreation(e) {
+   e.preventDefault();  
+
+   const groupName = groupNameEl.value.trim();
+   const memberNames = membersInputEl.value
+      .split(",")
+      .map(name => name.trim())
+      .filter(name => name !== "");
+   
+   if (groupName === "" || memberNames.length === 0) return;
+
+   group = createGroup(groupName, memberNames);
+   groupNameEl.value = 0;
+   membersInputEl.value = 0;
+   renderAll();
+}
+
+// ------- EVENT LISTENERS
+createGroupForm.addEventListener("submit", handleGroupCreation);
