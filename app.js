@@ -1,12 +1,17 @@
 import { getTotal, getBalances, getSettlements, round2 } from "./engine.js";
 
 // ------- DOM Elements
+const groupsSection = document.getElementById("groups-section");
+const groupListEl = document.getElementById("groups-list");
+
 const createSectionEl = document.getElementById("create-group-section");
 const createGroupForm = document.getElementById("create-group-form");
 const groupNameEl = document.getElementById("group-name-input");
 const membersInputEl = document.getElementById("members-input");
 
 const groupSection = document.getElementById("group-section");
+const groupTitleEl = document.getElementById("group-title");
+const backButton = document.getElementById("back-to-groups");
 const membersListEl = document.getElementById("members-list");
 const expenseForm = document.getElementById("expense-form");
 const expensePaidByEl = document.getElementById("expense-paid-by");
@@ -18,22 +23,33 @@ const balancesListEl = document.getElementById("balances-list");
 const settlementsListEl = document.getElementById("settlements-list");
 
 // ------- LOCAL STORAGE KEYS
-const STORAGE_KEY = "hisaab-group";
+const STORAGE_KEY = "hisaab-groups";
 
 // ------- STATE
-let group = loadGroup();
+let groups = loadGroups();
+let currentGroupId = null;
+let currentGroup = null;
 
 renderAll();
 
 // ------- RENDER FUNCTIONS
 function renderAll() {
-   if (group === null) {
+   // home screen
+   if (currentGroupId === null) {
+      groupsSection.hidden = false;
       createSectionEl.hidden = false;
       groupSection.hidden = true;
+      renderGroupList();
    }
+   // dashboard
    else {
+      groupsSection.hidden = true;
       createSectionEl.hidden = true;
       groupSection.hidden = false;
+
+      currentGroup = getGroup(currentGroupId);
+      groupTitleEl.textContent = currentGroup.name;   // user-typed text → textContent, never HTML
+
       renderMembers();
       renderExpenses();
       renderBalances();
@@ -43,7 +59,7 @@ function renderAll() {
 }
 
 function renderMembers() {
-   const members = group?.members ?? [];
+   const members = currentGroup?.members ?? [];
    if (members.length === 0) {
       membersListEl.innerHTML = `<li class="empty">no members yet</li>`;
       return;
@@ -55,13 +71,13 @@ function renderMembers() {
 }
 
 function renderExpenses() {
-   const expenses = group?.expenses ?? [];
+   const expenses = currentGroup?.expenses ?? [];
    if (expenses.length === 0) {
       expensesListEl.innerHTML = `<li class="empty">no expenses yet</li>`;
       return;
    }
-   const members = group?.members ?? [];
-   
+   const members = currentGroup?.members ?? [];
+
    expensesListEl.innerHTML = expenses.map(expense => {
       const memberName = members.find(member => member.id === expense.paidBy).name;
       return `<li>${expense.description}: ₹${expense.amount} (paid by ${memberName})</li>`;
@@ -69,7 +85,7 @@ function renderExpenses() {
 }
 
 function renderBalances() {
-   const balances = getBalances(group);
+   const balances = getBalances(currentGroup);
 
    if (balances.length === 0) {
       balancesListEl.innerHTML = `<li class="empty">this group has no members</li>`;
@@ -77,24 +93,24 @@ function renderBalances() {
    }
 
    balancesListEl.innerHTML = balances.map(balance => {
-      const className = balance.balance < 0 
-         ? "balance-negative" 
-         : balance.balance > 0 
-            ?  "balance-positive" 
+      const className = balance.balance < 0
+         ? "balance-negative"
+         : balance.balance > 0
+            ? "balance-positive"
             : "";
       return `<li class="${className}">${balance.name}: ₹${round2(balance.balance)}</li>`;
    }).join("");
 }
 
 function renderSettlements() {
-   const settlements = getSettlements(group);
+   const settlements = getSettlements(currentGroup);
 
    if (settlements.length === 0) {
       settlementsListEl.innerHTML = `<li class="empty">all settled up — no actions needed</li>`;
-      return; 
+      return;
    }
 
-   const members = group?.members ?? [];
+   const members = currentGroup?.members ?? [];
 
    settlementsListEl.innerHTML = settlements.map(settlement => {
       const payer = members.find(member => member.id === settlement.from).name;
@@ -104,10 +120,21 @@ function renderSettlements() {
 }
 
 function renderPaidByOptions() {
-   const members = group?.members ?? [];
+   const members = currentGroup?.members ?? [];
    const placeholderHtml = `<option value="" disabled selected>Select a member</option>`;
    const optionsHTML = members.map(member => `<option value="${member.id}">${member.name}</option>`).join("");
    expensePaidByEl.innerHTML = placeholderHtml + optionsHTML;
+}
+
+function renderGroupList() {
+   if (groups.length === 0) {
+      groupListEl.innerHTML = `<li class="empty">no groups yet — create one below</li>`;
+      return;
+   }
+
+   groupListEl.innerHTML = groups.map(group => {
+      return `<li data-id="${group.id}">${group.name} · ${group.members.length} members · ${group.expenses.length} expenses</li>`;
+   }).join("");
 }
 
 // -------- UTILITY FUNCTIONS
@@ -135,17 +162,24 @@ function createExpense(paidBy, amount, description) {
       paidBy,
       amount,
       description,
+   };
+}
+
+function loadGroups() {
+   try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (!saved) return [];
+
+      const parsed = JSON.parse(saved);
+      return Array.isArray(parsed) ? parsed : [];
+   }
+   catch {
+      return [];
    }
 }
 
-function loadGroup() {
-   try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      return saved ? JSON.parse(saved) : null;
-   }
-   catch {
-      return null;
-   }
+function getGroup(groupId) {
+   return groups.find(group => group.id === groupId);
 }
 
 // ------- EVENT HANDLERS
@@ -157,14 +191,17 @@ function handleGroupCreation(e) {
       .split(",")
       .map(name => name.trim())
       .filter(name => name !== "");
-   
+
    if (groupName === "" || memberNames.length === 0) return;
 
-   group = createGroup(groupName, memberNames);
+   const newGroup = createGroup(groupName, memberNames);
+   groups.push(newGroup);
+   currentGroupId = newGroup.id;   // open the new group right away — user made it to use it, not to look at the home list
+
    groupNameEl.value = "";
    membersInputEl.value = "";
 
-   localStorage.setItem(STORAGE_KEY, JSON.stringify(group));
+   localStorage.setItem(STORAGE_KEY, JSON.stringify(groups));
 
    renderAll();
 }
@@ -176,20 +213,37 @@ function handleAddExpense(e) {
    const amount = Number(expenseAmountEl.value);
    const description = expenseDescriptionEl.value.trim();
 
-   if (group === null || !paidBy || description === "" || !Number.isFinite(amount) || amount <= 0) return;
+   if (currentGroup === null || !paidBy || description === "" || !Number.isFinite(amount) || amount <= 0) return;
 
-   group.expenses.push(createExpense(paidBy, amount, description));
+   currentGroup.expenses.push(createExpense(paidBy, amount, description));
 
-   expenseAmountEl.value = "";      
-   expenseDescriptionEl.value = ""
+   expenseAmountEl.value = "";
+   expenseDescriptionEl.value = "";
 
-   localStorage.setItem(STORAGE_KEY, JSON.stringify(group));
+   localStorage.setItem(STORAGE_KEY, JSON.stringify(groups));
 
    renderAll();
-} 
+}
+
+function handleDisplayGroup(e) {
+   const clickedLi = e.target.closest("li");
+   if (!clickedLi || !groupListEl.contains(clickedLi)) return;
+   if (!clickedLi.dataset.id) return;   // empty-message li has no id → not a group → ignore
+
+   currentGroupId = clickedLi.dataset.id;
+   renderAll();
+}
+
+function handleBackButton() {
+   currentGroupId = null;
+   currentGroup = null;
+   renderAll();
+}
 
 // ------- EVENT LISTENERS
 createGroupForm.addEventListener("submit", handleGroupCreation);
 expenseForm.addEventListener("submit", handleAddExpense);
+groupListEl.addEventListener("click", handleDisplayGroup);
+backButton.addEventListener("click", handleBackButton);
 
 // known limitation: data saved by an older version of this app may not match what the code expects now. handling that = future work.

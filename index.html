@@ -13,6 +13,11 @@
    </header>
 
    <main>
+      <section id="groups-section" class="card" hidden>
+         <h2>Your groups</h2>
+         <ul id="groups-list"></ul>
+      </section>
+
       <!-- visible only when NO group exists yet -->
       <section id="create-group-section" class="card">
          <h2>New group</h2>
@@ -30,6 +35,7 @@
       <!-- the dashboard — hidden until a group exists -->
       <section id="group-section" hidden>
          <h2 id="group-title"></h2>
+         <button id="back-to-groups" type="button">← all groups</button>
 
          <section class="card">
             <h3>Members</h3>
