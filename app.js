@@ -17,8 +17,13 @@ const expensesListEl = document.getElementById("expenses-list");
 const balancesListEl = document.getElementById("balances-list");
 const settlementsListEl = document.getElementById("settlements-list");
 
+// ------- LOCAL STORAGE KEYS
+const STORAGE_KEY = "hisaab-group";
+
 // ------- STATE
-let group = null;
+let group = loadGroup();
+
+renderAll();
 
 // ------- RENDER FUNCTIONS
 function renderAll() {
@@ -36,7 +41,6 @@ function renderAll() {
       renderPaidByOptions();
    }
 }
-renderAll();
 
 function renderMembers() {
    const members = group?.members ?? [];
@@ -134,9 +138,19 @@ function createExpense(paidBy, amount, description) {
    }
 }
 
+function loadGroup() {
+   try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      return saved ? JSON.parse(saved) : null;
+   }
+   catch {
+      return null;
+   }
+}
+
 // ------- EVENT HANDLERS
 function handleGroupCreation(e) {
-   e.preventDefault();  
+   e.preventDefault(); // a form's default job is: send data to a server + reload — we have no server, JS handles it
 
    const groupName = groupNameEl.value.trim();
    const memberNames = membersInputEl.value
@@ -149,11 +163,14 @@ function handleGroupCreation(e) {
    group = createGroup(groupName, memberNames);
    groupNameEl.value = "";
    membersInputEl.value = "";
+
+   localStorage.setItem(STORAGE_KEY, JSON.stringify(group));
+
    renderAll();
 }
 
 function handleAddExpense(e) {
-   e.preventDefault(); 
+   e.preventDefault(); // a form's default job is: send data to a server + reload — we have no server, JS handles it
 
    const paidBy = expensePaidByEl.value;
    const amount = Number(expenseAmountEl.value);
@@ -166,9 +183,13 @@ function handleAddExpense(e) {
    expenseAmountEl.value = "";      
    expenseDescriptionEl.value = ""
 
+   localStorage.setItem(STORAGE_KEY, JSON.stringify(group));
+
    renderAll();
 } 
 
 // ------- EVENT LISTENERS
 createGroupForm.addEventListener("submit", handleGroupCreation);
 expenseForm.addEventListener("submit", handleAddExpense);
+
+// known limitation: data saved by an older version of this app may not match what the code expects now. handling that = future work.
