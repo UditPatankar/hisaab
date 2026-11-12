@@ -3,27 +3,29 @@
 <head>
    <meta charset="UTF-8" />
    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-   <title>hisaab 💸 — group expense splitter</title>
+   <title>hisaab — group expense splitter</title>
    <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-   <header>
-      <h1>hisaab 💸</h1>
-      <p class="tagline">settle group expenses fairly</p>
+   <header class="hero">
+      <span class="hero-badge">client-side · no account · no server</span>
+      <h1 class="wordmark">hisaab</h1>
+      <p class="tagline">settle group expenses fairly — the minimum payments, nothing more.</p>
    </header>
 
    <main>
+      <!-- home: existing groups -->
       <section id="groups-section" class="card" hidden>
-         <h2>Your groups</h2>
+         <h3 class="card-label">Your groups</h3>
          <ul id="groups-list"></ul>
       </section>
 
-      <!-- visible only when NO group exists yet -->
+      <!-- home: create a group -->
       <section id="create-group-section" class="card">
-         <h2>New group</h2>
+         <h3 class="card-label">New group</h3>
          <form id="create-group-form">
             <label>Group name
-               <input id="group-name-input" type="text" placeholder="Goa Trip" />
+               <input id="group-name-input" type="text" maxlength="40" placeholder="Goa Trip" />
             </label>
             <label>Members <small>(comma separated)</small>
                <input id="members-input" type="text" placeholder="Alex, David, Bob" />
@@ -32,38 +34,48 @@
          </form>
       </section>
 
-      <!-- the dashboard — hidden until a group exists -->
+      <!-- group dashboard -->
       <section id="group-section" hidden>
-         <h2 id="group-title"></h2>
          <button id="back-to-groups" type="button">← all groups</button>
+         <h2 id="group-title"></h2>
 
          <section class="card">
-            <h3>Members</h3>
+            <h3 class="card-label">Members</h3>
             <ul id="members-list" class="chips"></ul>
+
             <form id="expense-form" class="expense-form">
                <select id="expense-paid-by" required></select>
                <input id="expense-amount" type="number" step="0.01" min="0" placeholder="Amount ₹" required />
-               <input id="expense-description" type="text" placeholder="What for? (dinner, cab...)" required />
+               <input id="expense-description" type="text" maxlength="60" placeholder="What for? (dinner, cab…)" required />
                <button type="submit">Add expense</button>
             </form>
          </section>
 
          <section class="card">
-            <h3>Expenses</h3>
+            <h3 class="card-label">Expenses</h3>
             <ul id="expenses-list"></ul>
          </section>
 
          <section class="card">
-            <h3>Balances</h3>
+            <h3 class="card-label">Balances</h3>
             <ul id="balances-list"></ul>
          </section>
 
          <section class="card">
-            <h3>Settle up — minimum payments</h3>
+            <h3 class="card-label">Settle up — minimum payments</h3>
             <ul id="settlements-list"></ul>
+         </section>
+
+         <section class="card">
+            <h3 class="card-label">Activity</h3>
+            <ul id="activity-list"></ul>
          </section>
       </section>
    </main>
+
+   <footer class="foot">built with vanilla javascript · your data never leaves this browser</footer>
+
+   <div id="toast" role="status"></div>
 
    <script type="module" src="app.js"></script>
 </body>
