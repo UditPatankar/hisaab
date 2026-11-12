@@ -242,6 +242,24 @@ ul li:last-child {
   margin-top: 4px;
 }
 
+/* clear-all = small ghost button aligned with the card label */
+#clear-expenses-btn {
+  background: transparent;
+  color: var(--danger);
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  float: right;
+  margin: -34px 0 10px 0;
+  box-shadow: none;
+}
+#clear-expenses-btn:hover {
+  background: var(--danger-tint);
+  color: var(--danger);
+  transform: none;
+  box-shadow: none;
+}
+
 /* balances = tinted pills */
 #balances-list li {
   border-bottom: none;

@@ -11,6 +11,7 @@ const groupSection = document.getElementById("group-section");
 const groupTitleEl = document.getElementById("group-title");
 const backButton = document.getElementById("back-to-groups");
 const membersListEl = document.getElementById("members-list");
+const clearExpensesBtn = document.getElementById("clear-expenses-btn");
 const expenseForm = document.getElementById("expense-form");
 const expensePaidByEl = document.getElementById("expense-paid-by");
 const expenseAmountEl = document.getElementById("expense-amount");
@@ -362,6 +363,31 @@ function handleDeleteExpense(e) {
    showToast("Expense deleted");
 }
 
+function handleClearExpenses() {
+   const activeGroup = getActiveGroup();
+   if (activeGroup === null) return;
+
+   if (activeGroup.expenses.length === 0) return showToast("No expenses to clear");
+
+   if (!confirm(`Delete ALL ${activeGroup.expenses.length} expenses in this group?`)) return;
+
+   // same policy as single delete: recorded payments are real money — offer a clean slate
+   if (activeGroup.settlements.length > 0) {
+      const wipePayments = confirm(
+         "Also remove ALL recorded payments?\n\n" +
+         "OK = fresh start — every balance returns to ₹0\n" +
+         "Cancel = keep them — balances show who the money really belongs to now"
+      );
+      if (wipePayments) activeGroup.settlements = [];
+   }
+
+   activeGroup.expenses = [];
+
+   saveGroups();
+   renderAll();
+   showToast("All expenses cleared");
+}
+
 function handleSettlement(e) {
    const clickedBtn = e.target.closest(".paid-btn");
    if (!clickedBtn) return;
@@ -404,5 +430,6 @@ expenseForm.addEventListener("submit", handleAddExpense);
 groupListEl.addEventListener("click", handleGroupListClick);
 backButton.addEventListener("click", handleBackButton);
 expensesListEl.addEventListener("click", handleDeleteExpense);
+clearExpensesBtn.addEventListener("click", handleClearExpenses);
 settlementsListEl.addEventListener("click", handleSettlement);
 activityListEl.addEventListener("click", handleUndoSettlement);
