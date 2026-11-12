@@ -28,7 +28,6 @@ const STORAGE_KEY = "hisaab-groups";
 // ------- STATE
 let groups = loadGroups();
 let currentGroupId = null;
-let currentGroup = null;
 
 renderAll();
 
@@ -47,19 +46,19 @@ function renderAll() {
       createSectionEl.hidden = true;
       groupSection.hidden = false;
 
-      currentGroup = getGroup(currentGroupId);
-      groupTitleEl.textContent = currentGroup.name;   // user-typed text → textContent, never HTML
+      const activeGroup = getActiveGroup();
+      groupTitleEl.textContent = activeGroup.name;   // user-typed text → textContent, never HTML
 
-      renderMembers();
-      renderExpenses();
-      renderBalances();
-      renderSettlements();
-      renderPaidByOptions();
+      renderMembers(activeGroup);
+      renderExpenses(activeGroup);
+      renderBalances(activeGroup);
+      renderSettlements(activeGroup);
+      renderPaidByOptions(activeGroup);
    }
 }
 
-function renderMembers() {
-   const members = currentGroup?.members ?? [];
+function renderMembers(group) {
+   const members = group?.members ?? [];
    if (members.length === 0) {
       membersListEl.innerHTML = `<li class="empty">no members yet</li>`;
       return;
@@ -70,13 +69,13 @@ function renderMembers() {
    }).join("");
 }
 
-function renderExpenses() {
-   const expenses = currentGroup?.expenses ?? [];
+function renderExpenses(group) {
+   const expenses = group?.expenses ?? [];
    if (expenses.length === 0) {
       expensesListEl.innerHTML = `<li class="empty">no expenses yet</li>`;
       return;
    }
-   const members = currentGroup?.members ?? [];
+   const members = group?.members ?? [];
 
    expensesListEl.innerHTML = expenses.map(expense => {
       const memberName = members.find(member => member.id === expense.paidBy).name;
@@ -84,8 +83,8 @@ function renderExpenses() {
    }).join("");
 }
 
-function renderBalances() {
-   const balances = getBalances(currentGroup);
+function renderBalances(group) {
+   const balances = getBalances(group);
 
    if (balances.length === 0) {
       balancesListEl.innerHTML = `<li class="empty">this group has no members</li>`;
@@ -102,15 +101,15 @@ function renderBalances() {
    }).join("");
 }
 
-function renderSettlements() {
-   const settlements = getSettlements(currentGroup);
+function renderSettlements(group) {
+   const settlements = getSettlements(group);
 
    if (settlements.length === 0) {
       settlementsListEl.innerHTML = `<li class="empty">all settled up — no actions needed</li>`;
       return;
    }
 
-   const members = currentGroup?.members ?? [];
+   const members = group?.members ?? [];
 
    settlementsListEl.innerHTML = settlements.map(settlement => {
       const payer = members.find(member => member.id === settlement.from).name;
@@ -119,8 +118,8 @@ function renderSettlements() {
    }).join("");
 }
 
-function renderPaidByOptions() {
-   const members = currentGroup?.members ?? [];
+function renderPaidByOptions(group) {
+   const members = group?.members ?? [];
    const placeholderHtml = `<option value="" disabled selected>Select a member</option>`;
    const optionsHTML = members.map(member => `<option value="${member.id}">${member.name}</option>`).join("");
    expensePaidByEl.innerHTML = placeholderHtml + optionsHTML;
@@ -178,8 +177,8 @@ function loadGroups() {
    }
 }
 
-function getGroup(groupId) {
-   return groups.find(group => group.id === groupId);
+function getActiveGroup() {
+   return groups.find(group => group.id === currentGroupId) ?? null;
 }
 
 // ------- EVENT HANDLERS
@@ -213,9 +212,11 @@ function handleAddExpense(e) {
    const amount = Number(expenseAmountEl.value);
    const description = expenseDescriptionEl.value.trim();
 
-   if (currentGroup === null || !paidBy || description === "" || !Number.isFinite(amount) || amount <= 0) return;
+   const activeGroup = getActiveGroup();
 
-   currentGroup.expenses.push(createExpense(paidBy, amount, description));
+   if (activeGroup === null || !paidBy || description === "" || !Number.isFinite(amount) || amount <= 0) return;
+
+   activeGroup.expenses.push(createExpense(paidBy, amount, description));
 
    expenseAmountEl.value = "";
    expenseDescriptionEl.value = "";
@@ -236,7 +237,6 @@ function handleDisplayGroup(e) {
 
 function handleBackButton() {
    currentGroupId = null;
-   currentGroup = null;
    renderAll();
 }
 
