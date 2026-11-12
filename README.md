@@ -1,29 +1,29 @@
-# 💸 hisaab
+# hisaab
 
-**Settle group expenses fairly** — trips, outings, flatmates. No more "main tujhe baad mein de dunga."
+**Settle group expenses fairly** — trips, outings, flatmates. hisaab takes every expense of a group and produces the minimum list of payments that settles everyone.
 
 🔗 **Live app:** https://uditpatankar.github.io/hisaab/
 
----
-
-## The problem
-
-After every group trip comes the painful part: who owes whom, and how much? Spreadsheets get messy, mental math causes fights. hisaab takes every expense of a group and produces the **minimum list of payments** that settles everyone.
-
 ## Features
 
-- ✅ Create groups (name + members), keep as many groups as you want
-- ✅ Log expenses: amount, description, who paid
-- ✅ Auto equal-split among all members
-- ✅ Live balances — who owes / who is owed (color coded)
-- ✅ "Settle up" list: minimum-transaction payment plan (greedy matching)
-- ✅ Data persists in the browser (localStorage) — survives refresh & restart
-- ✅ Works on the go: everything runs client-side, no account needed
+- Multiple groups — create, switch, delete (with a warning showing exactly what gets removed)
+- Log expenses (amount, description, who paid) with automatic equal split
+- Input validation with inline toast feedback — nothing fails silently
+- Delete expenses; optionally wipe the group back to a clean slate
+- Live balances, color coded — who owes, who is owed
+- "Settle up" — minimum-transaction payment plan (greedy matching)
+- Mark payments as settled — recorded payments become facts, balances shrink
+- Undo any recorded payment from the activity feed — balances recalculate
+- Activity feed — chronological log of every expense and payment
+- Persistent browser storage with automatic migration of older saved data
+- Fail-safe loading — corrupted storage falls back to a fresh start
+- XSS-safe rendering — user input is escaped before touching the DOM
 
-## Run it locally
+## Run locally
 
 ```bash
 git clone https://github.com/UditPatankar/hisaab.git
 cd hisaab
-npx serve .        # or open index.html with VS Code Live Server
+npx serve .        # or VS Code Live Server
+npm test           # engine tests
 ```
