@@ -1,10 +1,9 @@
 {
   "name": "hisaab",
   "version": "1.0.0",
-  "description": "settle group expenses fairly",
+  "description": "settle group expenses fairly - minimum payments, client-side only",
   "type": "module",
   "scripts": {
-    "test": "node engine.test.js",
-    "start": "node engine.js"
+    "test": "node engine.test.js"
   }
 }

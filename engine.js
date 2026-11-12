@@ -1,45 +1,36 @@
-/* 
-   hisaab - settlement engine
-   ------------------------------
-   Pure business logic for group expenses.
-   FACTS go in (the group object) -> DERIVED values come out.
-   No console.log or DOM in this file's functions - printing/displaying is the caller's job.
+/**
+ * hisaab — settlement engine
+ * Pure business logic: FACTS in → DERIVED values out. No DOM, no logging, no side effects.
+ *
+ * Group shape (contract):
+ * {
+ *   id, name,
+ *   members:     [{ id, name }],
+ *   expenses:    [{ id, amount, paidBy, description, date }],  // paidBy = member id
+ *   settlements: [{ id, from, to, amount, date }],             // payments that actually happened
+ * }
+ */
 
-   Expected group shape (the file's contract):
-   {
-      id, name,
-      members: [{id, name}],
-      expenses: [{id, amount, paidBy, description}], // paidBy = a member id
-   }
-*/
-
-// money helper: rounds to 2 decimals (paise) — all engine math stays paise-clean
+// money is rounded to paise at every boundary; anything within one paisa of zero is settled
 const round2 = (x) => Math.round(x * 100) / 100;
 
-/* ----------- RULES (pure functions) ------------------------------------- */
-
-/* 
-   Total of all expenses in the group.
-   @param {object} group
-   @returns {number} total
-*/
+// sum of every expense in the group
 function getTotal(group) {
    const expenses = group?.expenses ?? [];
    return expenses.reduce((total, expense) => total + expense.amount, 0);
 }
 
-/* 
-   Each member's balance = (what they paid) - (their fair share)
-   negative -> owes | positive -> is owed | 0 -> settled up
-
-   @param {object} group
-   @returns {Array<{id, name, balance}>} array of each member's balance
-*/
+/**
+ * Effective balance per member:
+ * (expenses paid − fair share) + settlements paid out − settlements received.
+ * negative → owes | positive → is owed | 0 → settled up
+ */
 function getBalances(group) {
    const members = group?.members ?? [];
-   if (members.length === 0) return []; // no members -> no fair share -> nothing to compute
+   if (members.length === 0) return [];
 
    const expenses = group?.expenses ?? [];
+   const settlements = group?.settlements ?? [];
    const fairShare = round2(getTotal(group) / members.length);
 
    return members.map(member => {
@@ -47,57 +38,49 @@ function getBalances(group) {
          (total, expense) => (expense.paidBy === member.id ? total + expense.amount : total),
          0
       );
-      return { ...member, balance: totalPaid - fairShare };
+
+      const { paidOut, received } = settlements.reduce((acc, s) => {
+         if (s.from === member.id) acc.paidOut += s.amount;
+         if (s.to === member.id) acc.received += s.amount;
+         return acc;
+      }, { paidOut: 0, received: 0 });
+
+      // tolerance lives at the source: a balance within one paisa of zero IS zero.
+      // kills ₹-0.01 pills and phantom "pays ₹0" suggestions everywhere, permanently.
+      const raw = (totalPaid - fairShare) + paidOut - received;
+      return { ...member, balance: Math.abs(raw) <= 0.01 ? 0 : round2(raw) };
    });
 }
 
-/* 
-   Settlements = the minimum list of payments that brings every balance to 0.
-   Greedy matching: biggest outstanding amounts settle first,
-   whoever reaches 0 leaves the line, next one steps up.
-
-   from/to are member IDS, not names — ids are identity, names are display
-   (two members can share a name, ids cannot collide).
-
-   @param {object} group
-   @returns {Array<{from, to, amount}>} transactions
-      from: debtor's member id
-      to: creditor's member id
-      amount: min(|debtor's balance|, |creditor's balance|), rounded to paise
-*/
+/**
+ * Minimum-transaction settlement plan (greedy matching).
+ * Each payment wipes out at least one side completely.
+ * from/to are member IDs — identity, never display names.
+ */
 function getSettlements(group) {
    const balances = getBalances(group);
-   const debtors = balances.filter((member) => member.balance < 0);
-   const creditors = balances.filter((member) => member.balance > 0);
+   const debtors = balances.filter(member => member.balance < 0);
+   const creditors = balances.filter(member => member.balance > 0);
 
-   const settlements = [];
+   const plan = [];
    let d = 0;
    let c = 0;
 
    while (d < debtors.length && c < creditors.length) {
       const debtor = debtors[d];
       const creditor = creditors[c];
-
       const amount = round2(Math.min(Math.abs(debtor.balance), Math.abs(creditor.balance)));
 
-      settlements.push({ from: debtor.id, to: creditor.id, amount });
+      plan.push({ from: debtor.id, to: creditor.id, amount });
 
       debtor.balance += amount;
       creditor.balance -= amount;
 
-      // settled = within 1 paisa of zero (Math.abs is the point: a debt of -400
-      // must NOT read as settled just because -400 <= 0.01)
       if (Math.abs(debtor.balance) <= 0.01) { debtor.balance = 0; d++; }
       if (Math.abs(creditor.balance) <= 0.01) { creditor.balance = 0; c++; }
    }
 
-   return settlements;
+   return plan;
 }
-
-/*
-   KNOWN LIMITATION (v1): anything within 1 paisa of zero counts as settled,
-   so tiny rounding remainders are absorbed instead of paid back.
-   Paying back the last paisa exactly = v2.
-*/
 
 export { getTotal, getBalances, getSettlements, round2 };
