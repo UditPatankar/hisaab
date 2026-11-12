@@ -1,34 +1,29 @@
 # 💸 hisaab
 
-Settle group expenses fairly — trips, outings, flatmates. No more "main tujhe baad mein de dunga."
+**Settle group expenses fairly** — trips, outings, flatmates. No more "main tujhe baad mein de dunga."
 
-## Problem
+🔗 **Live app:** https://uditpatankar.github.io/hisaab/
 
-A user wants a tool that splits group expenses fairly, so that everyone's share is settled without doing mental math or awkward spreadsheet talks.
+---
 
-## User Stories
+## The problem
 
-- As a group coordinator, I want to create a group with a title, so that I can track expenses per event/trip.
-- As a member, I want to add members to the group, so that everyone is included in the split.
-- As a member, I want to log an expense (amount, description, who paid), so that the group's record is accurate.
-- As a member, I want expenses auto-split equally among all members, so that nobody does manual math.
-- As a participant, I want a dashboard of who owes how much to whom, so that I know my financial standing.
-- As a member, I want to edit/delete a wrongly entered expense, so that records stay truthful.
+After every group trip comes the painful part: who owes whom, and how much? Spreadsheets get messy, mental math causes fights. hisaab takes every expense of a group and produces the **minimum list of payments** that settles everyone.
 
-## Scope
+## Features
 
-| Phase    | Features                                               |
-| -------- | ------------------------------------------------------ |
-| v1 (MVP) | group + members → add expense (equal split) → balances |
-| v2       | settlements (mark paid), activity feed                 |
-| v3       | exact/percentage splits                                |
+- ✅ Create groups (name + members), keep as many groups as you want
+- ✅ Log expenses: amount, description, who paid
+- ✅ Auto equal-split among all members
+- ✅ Live balances — who owes / who is owed (color coded)
+- ✅ "Settle up" list: minimum-transaction payment plan (greedy matching)
+- ✅ Data persists in the browser (localStorage) — survives refresh & restart
+- ✅ Works on the go: everything runs client-side, no account needed
 
-## Core Design Decisions
+## Run it locally
 
-- Single source of truth: only facts are stored (members, expenses). Balances/totals are always DERIVED by calculation — never stored.
-- Every member & expense gets a unique ID (names are for display, never identity).
-- Architecture: FACTS (plain JSON-safe objects) → RULES (pure functions) → VIEWS (DOM).
-
-## Tech
-
-JavaScript (vanilla), Git & GitHub. UI later; engine first.
+```bash
+git clone https://github.com/UditPatankar/hisaab.git
+cd hisaab
+npx serve .        # or open index.html with VS Code Live Server
+```
