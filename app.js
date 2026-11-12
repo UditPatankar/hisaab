@@ -79,7 +79,10 @@ function renderExpenses(group) {
 
    expensesListEl.innerHTML = expenses.map(expense => {
       const memberName = members.find(member => member.id === expense.paidBy).name;
-      return `<li>${expense.description}: ₹${expense.amount} (paid by ${memberName})</li>`;
+      return `<li>
+         ${expense.description}: ₹${expense.amount} (paid by ${memberName})
+         <button class="delete-expense-btn" data-id="${expense.id}"> ✕ </button>
+      </li>`;
    }).join("");
 }
 
@@ -240,10 +243,28 @@ function handleBackButton() {
    renderAll();
 }
 
+function handleDeleteExpense(e) {
+   const clickedBtn = e.target.closest(".delete-expense-btn");
+   if (!clickedBtn || !expensesListEl.contains(clickedBtn)) return;
+   if (!confirm("Delete this expense?")) return;
+
+   const targetExpenseId = clickedBtn.dataset.id;
+   const activeGroup = getActiveGroup();
+
+   if (activeGroup === null) return;
+
+   const updatedExpenses = activeGroup.expenses.filter(expense => expense.id !== targetExpenseId);
+   activeGroup.expenses = updatedExpenses;
+
+   localStorage.setItem(STORAGE_KEY, JSON.stringify(groups));
+   renderAll();
+}
+
 // ------- EVENT LISTENERS
 createGroupForm.addEventListener("submit", handleGroupCreation);
 expenseForm.addEventListener("submit", handleAddExpense);
 groupListEl.addEventListener("click", handleDisplayGroup);
 backButton.addEventListener("click", handleBackButton);
+expensesListEl.addEventListener("click", handleDeleteExpense);
 
 // known limitation: data saved by an older version of this app may not match what the code expects now. handling that = future work.

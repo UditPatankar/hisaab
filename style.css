@@ -226,3 +226,16 @@ ul li:last-child {
   background: var(--green);
   color: #fff;
 }
+
+.delete-expense-btn {
+  background: transparent;
+  color: var(--red);
+  font-weight: 700;
+  padding: 2px 8px;
+  font-size: 0.9rem;
+  float: right;
+}
+.delete-expense-btn:hover {
+  background: rgb(194 58 47 / 10%);
+  transform: none;
+}
