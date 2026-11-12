@@ -10,6 +10,7 @@
 - Log expenses (amount, description, who paid) with automatic equal split
 - Input validation with inline toast feedback — nothing fails silently
 - Delete expenses; optionally wipe the group back to a clean slate
+- Clear all expenses at once (with confirmation and clean-slate option)
 - Live balances, color coded — who owes, who is owed
 - "Settle up" — minimum-transaction payment plan (greedy matching)
 - Mark payments as settled — recorded payments become facts, balances shrink
